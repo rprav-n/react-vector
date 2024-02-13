@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Stage, Layer, Rect, Line, Arrow, Circle, Text, Arc, Label, Tag, RegularPolygon } from "react-konva";
-
+import Victor from "victor";
 
 
 const App = () => {
@@ -11,9 +11,6 @@ const App = () => {
 
   const [redArrowPoints, setRedArrowPoints] = useState([200, 200, 200, 100]);
   const [redArrowPointsContinuous, setRedArrowPointsContinuous] = useState([200, 200, 200, 100]);
-  // const [baseLine, setBaseLine] = useState()
-  const [textPoints, setTextPoints] = useState([200, 200, 200, 100]);
-
 
   const [snap, setSnap] = useState(true);
   const [clamp, setClamp] = useState(false);
@@ -76,23 +73,61 @@ const App = () => {
         />
       );
     }
-
-
-
-
   }
 
+
+  const degreeToRad = (deg) => {
+    return deg * (Math.PI / 180)
+  }
+
+  const radianToDeg = (rad) => {
+    return rad * (180 / Math.PI)
+  }
+
+  const calculateDegree = (x1, y1, x2, y2, x3, y3, x4, y4) => {
+
+    let vecA = new Victor(x2 - x1, y2 - y1).normalize();
+    let vecB = new Victor(x4 - x3, y4 - y3).normalize();
+
+    let angleRadians = Math.atan2(vecB.y, vecB.x) - Math.atan2(vecA.y, vecA.x);
+
+    let angleDegrees = radianToDeg(angleRadians);
+
+    if (angleDegrees >= 180) {
+      angleDegrees -= 360;
+    } else if (angleDegrees <= -180) {
+      angleDegrees += 360;
+    }
+
+    return angleDegrees.toFixed(1);
+  }
+
+
+
+  // TODO: calculate red arrow center point and draw a line 90deg to the red arrow point
+  const getPoints = (continuousPoints) => {
+
+    const x1 = redArrowPointsContinuous[0];
+    const y1 = redArrowPointsContinuous[1];
+    const x2 = redArrowPointsContinuous[2];
+    const y2 = redArrowPointsContinuous[3];
+
+    const centerPoint = new Victor((x1 + x2) / 2, (y1 + y2) / 2);
+
+    const directionVector = new Victor(x2 - x1, y2 - y1);
+    const perpendicularVector = directionVector.clone().rotate(Math.PI / 2).normalize();
+
+    const desiredLength = 20;
+    const endPoint = centerPoint.clone().add(perpendicularVector.clone().multiplyScalar(desiredLength));
+
+    return [centerPoint.x, centerPoint.y, endPoint.x, endPoint.y];
+  };
 
   return (
     <div
       style={{ width: '100%', display: "flex", justifyContent: 'center', alignItems: 'center' }}
     >
-
-
       <div style={{ display: "flex", flexDirection: "column", gap: '1rem' }}>
-
-
-
         <button onClick={() => {
           setSnap(!snap)
         }}>Snap: {snap ? 'true' : 'false'}</button>
@@ -111,10 +146,13 @@ const App = () => {
         <button onClick={() => {
           setRedArrowPoints([200, 200, 200, 100])
           setRedArrowPointsContinuous([200, 200, 200, 100])
-          setTextPoints([200, 200, 200, 100])
           setScale(1)
         }}>RESET</button>
+
+        <small>Degree: {calculateDegree(...redArrowPointsContinuous, redArrowPointsContinuous[0], redArrowPointsContinuous[1], redArrowPointsContinuous[0] + 40, redArrowPointsContinuous[1])}</small>
+
       </div>
+
 
       <Stage width={400} height={400} style={{ background: "lightblue", display: "flex", justifyContent: "center", padding: '1rem' }}
         onWheel={e => {
@@ -140,39 +178,8 @@ const App = () => {
 
         <Layer>
 
-
-          {/* BLACK rectangle */}
-          <Rect
-            visible={false}
-            onDragMove={(e) => {
-              const target = e.target;
-              let newX = target.x();
-              let newY = target.y();
-
-              if (snap) {
-                newX = Math.round(target.x() / grid) * grid;
-                newY = Math.round(target.y() / grid) * grid;
-              }
-
-              const clampedX = Math.max(0, Math.min(newX, 400 - target.width()));
-              const clampedY = Math.max(0, Math.min(newY, 400 - target.height()));
-
-              target.position({ x: clampedX, y: clampedY });
-              target.getLayer().batchDraw(); // Optionally force redraw
-            }}
-            x={0}
-            y={0}
-            draggable
-            width={grid}
-            height={grid}
-            fill="rgba(0, 0, 0, 1)"
-            strokeWidth={5}
-          />
-
-
           {/* RED Arrow */}
           <Arrow
-            _useStrictMode
             onDragMove={e => {
               const target = e.target;
               let newX = target.x();
@@ -201,15 +208,10 @@ const App = () => {
                 ];
               }
 
-
-
-              setTextPoints(updatedPoints)
               setRedArrowPointsContinuous(updatedPoints)
 
               target.position({ x: 0, y: 0 });
-              target.getLayer().batchDraw();
 
-              // console.debug("updatedPoints", updatedPoints, redArrowPoints, newX, newY)
 
               const container = e.target.getStage().container();
               container.style.cursor = "all-scroll";
@@ -240,9 +242,7 @@ const App = () => {
                 defaultPos[2] + newX,
                 defaultPos[3] + newY
               ];
-              // console.debug("redArrowPoints", redArrowPoints, updatedPoints, target.x(), target.y())
               setRedArrowPoints(updatedPoints)
-              setTextPoints(updatedPoints)
 
               target.position({ x: 0, y: 0 });
 
@@ -264,68 +264,31 @@ const App = () => {
             stroke="#bb0000"
             draggable
             fill="#bb0000"
-            strokeWidth={2}
+            strokeWidth={3}
           // shadowForStrokeEnabled={false}
 
           />
 
-          {/* <RegularPolygon 
-            sides={3}
-            fill="#bb0000"
-            strokeWidth={4}
-            offsetY={-10}
-            x={redArrowPointsContinuous[2]}
-            y={redArrowPointsContinuous[3]}
-            radius={10}
-          /> */}
 
           <Line
             points={[redArrowPointsContinuous[0], redArrowPointsContinuous[1], redArrowPointsContinuous[0] + 40, redArrowPointsContinuous[1]]}
-            stroke={'black'}
+            stroke={'#7a7a7a'}
             strokeWidth={2}
           />
 
-          {/* <Arc 
-            x={200}
-            y={200}
-            innerRadius={1}
-            outerRadius={10}
-            angle={100}
-            fill="yellow"
-            stroke={'black'}
-            strokeWidth={2}
+          {/* <Line
+            points={getPoints()}
+            stroke="red"
+            strokeWidth={1}
           /> */}
-          {/* <Line 
-            // points={[5, 70, 140, 23, 250, 60]}
-            points={[
-                redArrowPointsContinuous[0]+20, redArrowPointsContinuous[1], 
-                redArrowPointsContinuous[0]+20, redArrowPointsContinuous[1]-20,
-                // redArrowPointsContinuous[2]+20, redArrowPointsContinuous[3]+20,
-                redArrowPointsContinuous[0], redArrowPointsContinuous[1]-20,
-              ]}
-            stroke={'red'}
-            strokeWidth={2}
-            tension={1}
-          /> */}
-
-          {/*  <Text
-            // x={(redArrowPoints[0] + redArrowPoints[2]) / 2}
-            // y={(redArrowPoints[1] + redArrowPoints[3]) / 2}
-            x={(textPoints[0] + textPoints[2]) / 2}
-            y={(textPoints[1] + textPoints[3]) / 2}
-            offsetX={20}
-            // offsetY={20}
-            text="a"
-            fill="red"
-            fontSize={16}
-            fontVariant="bold"
-          /> */}
-
           <Label
-            x={(redArrowPointsContinuous[0] + redArrowPointsContinuous[2]) / 2}
-            y={(redArrowPointsContinuous[1] + redArrowPointsContinuous[3]) / 2}
-            // offsetX={20}
-            // offsetY={20}
+            _useStrictMode
+            x={getPoints()[2] - 10}
+            y={getPoints()[3] - 10}
+            onClick={e => {
+              let target = e.target;
+              console.debug(target)
+            }}
             onMouseEnter={e => {
               const container = e.target.getStage().container();
               container.style.cursor = "all-scroll";
@@ -335,29 +298,66 @@ const App = () => {
               container.style.cursor = "default";
             }}
 
+            onDragMove={e => {
+              const target = e.target;
+              let newX = target.x();
+              let newY = target.y();
+              if (snap) {
+                newX = Math.round(target.x() / grid) * grid;
+                newY = Math.round(target.y() / grid) * grid;
+              }
+              let defaultPos = redArrowPoints;
+
+              let updatedPoints = [];
+
+              if (clamp) {
+                updatedPoints = [
+                  handleClamp(defaultPos[0] + newX),
+                  handleClamp(defaultPos[1] + newY),
+                  handleClamp(defaultPos[2] + newX),
+                  handleClamp(defaultPos[3] + newY)
+                ];
+              } else {
+                updatedPoints = [
+                  defaultPos[0] + newX,
+                  defaultPos[1] + newY,
+                  defaultPos[2] + newX,
+                  defaultPos[3] + newY
+                ];
+              }
+
+              setRedArrowPointsContinuous(updatedPoints)
+
+              const container = e.target.getStage().container();
+              container.style.cursor = "all-scroll";
+            }}
+
+            draggable
           >
             <Tag
-              fill="yellow"
+              fill="#f3f383"
             />
             <Text
-              text="a"
+              text="ā"
               fill="black"
               fontSize={18}
               padding={2}
+              width={20}
+              height={20}
+              align="center"
             // fontVariant="bold"
             />
           </Label>
 
           <Circle
-            _useStrictMode
+          _useStrictMode
             x={redArrowPointsContinuous[2]}
             y={redArrowPointsContinuous[3]}
-            // offsetY={-10}
             draggable
             radius={12}
-            // stroke={"#666"}
-            fill={"transparent"}
-            // fill={"#ddd"}
+            stroke={"#666"}
+            // fill={"transparent"}
+            fill={"#ddd"}
             strokeWidth={1}
             onMouseEnter={e => {
               const container = e.target.getStage().container();
@@ -387,40 +387,10 @@ const App = () => {
 
               setRedArrowPoints(updatedRedArrowPoints)
               setRedArrowPointsContinuous(updatedRedArrowPoints)
-              setTextPoints(updatedRedArrowPoints)
 
-              target.position({ x: 0, y: 0 });
-              // target.getLayer().batchDraw(); // Optionally force redraw
-              // setRedArrowAnchor(x, y)
+              // target.position({ x: 0, y: 0 });
             }}
           />
-
-
-          {/* BLUE Arrow */}
-          {/* <Arrow 
-            x={0}
-            y={0}
-            points={arrowPoints}
-            closed
-            stroke="#0aaafa"
-            draggable
-            strokeWidth={5}
-            onDragMove={e => {
-
-            }}
-            onMouseDown={e => {
-                console.log("Mouse is moving",  e.evt.offsetY)
-                let newArrowPoints = [...arrowPoints]
-                let newX = e.evt.offsetX;
-                let newY = e.evt.offsetY;
-    
-                newArrowPoints[2] = newX;
-                newArrowPoints[3] = newY;
-                setArrowPoints(newArrowPoints);
-              }}
-        /> */}
-
-
 
         </Layer>
       </Stage>
