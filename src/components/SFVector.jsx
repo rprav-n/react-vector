@@ -245,11 +245,21 @@ const SFVector = (props) => {
 
       {/* Arrow */}
       <Arrow
-        _useStrictMode
         points={points}
         stroke={props.arrowStorke}
         strokeWidth={4}
         fill={props.arrowStorke}
+        /* draggable
+        onMouseEnter={(event) => handleMousePointer(event, 'all-scroll')}
+        onMouseLeave={(event) => handleMousePointer(event, 'default')}
+        onDragMove={(event) => handleArrowOnDrag(event, 'move')}
+        onDragEnd={(event) => handleArrowOnDrag(event, 'end')} */
+      />
+
+      <Line 
+        points={points}
+        stroke={props.debug ? '#ddd' :'transparent'}
+        strokeWidth={20}
         draggable
         onMouseEnter={(event) => handleMousePointer(event, 'all-scroll')}
         onMouseLeave={(event) => handleMousePointer(event, 'default')}
@@ -291,9 +301,8 @@ const SFVector = (props) => {
         x={points[2]}
         y={points[3]}
         radius={20}
-        // stroke={"#666"} // for debug
-        // fill={"#ddd"} // for debug
-        fill={"transparent"}
+        stroke={props.debug ? '#666' :'transparent'} 
+        fill={props.debug ? '#ddd' :'transparent'} 
         draggable
         onMouseEnter={(event) => handleMousePointer(event, 'pointer')}
         onMouseLeave={(event) => handleMousePointer(event, 'default')}

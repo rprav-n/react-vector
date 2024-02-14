@@ -16,6 +16,7 @@ function App() {
   const [showAngle, setShowAngle] = useState(true);
   const [showGrid, setShowGrid] = useState(true);
   const [showComponents, setShowComponents] = useState(false);
+  const [debug, setDebug] = useState(false);
 
   const [selectedVec, setSelectedVec] = useState(null);
 
@@ -102,6 +103,12 @@ function App() {
             />
           </div>
           <div>
+            <label htmlFor='debug'>Debug Mode</label>
+            <input type="checkbox" name='debug' id="debug" checked={debug}
+              onChange={() => setDebug(!debug)}
+            />
+          </div>
+          <div>
             <label htmlFor='color'>Color: </label>
             <input type="color" name='color' id="color" value={selectedVec?.color || "#bb0000"} onChange={(e) => {
               let color = e.target.value;
@@ -168,6 +175,7 @@ function App() {
         {vectors.map((vec, index) => {
           return <SFVector
             key={index}
+            debug={debug}
             active={vec.active}
             showAngle={showAngle}
             showComponents={showComponents}
