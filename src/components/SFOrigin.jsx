@@ -81,7 +81,7 @@ const SFOrigin = (props) => {
             <Circle
                 x={position.x}
                 y={position.y}
-                radius={6}
+                radius={8}
                 stroke={"#666"}
                 fill={"#ddd"}
                 strokeWidth={2}

@@ -248,7 +248,7 @@ const SFVector = (props) => {
         _useStrictMode
         points={points}
         stroke={props.arrowStorke}
-        strokeWidth={3}
+        strokeWidth={4}
         fill={props.arrowStorke}
         draggable
         onMouseEnter={(event) => handleMousePointer(event, 'all-scroll')}
@@ -290,7 +290,7 @@ const SFVector = (props) => {
       <Circle
         x={points[2]}
         y={points[3]}
-        radius={12}
+        radius={20}
         // stroke={"#666"} // for debug
         // fill={"#ddd"} // for debug
         fill={"transparent"}
