@@ -22,7 +22,7 @@ const App = () => {
   }
 
   const grid = 20;
-  const gridWidth = 400;
+  const gridWidth = 600;
   const linesA = [];
   const linesB = [];
 
@@ -115,13 +115,42 @@ const App = () => {
     const centerPoint = new Victor((x1 + x2) / 2, (y1 + y2) / 2);
 
     const directionVector = new Victor(x2 - x1, y2 - y1);
-    const perpendicularVector = directionVector.clone().rotate(Math.PI / 2).normalize();
+    let deg = calculateDegree(...redArrowPointsContinuous, redArrowPointsContinuous[0], redArrowPointsContinuous[1], redArrowPointsContinuous[0] + 40, redArrowPointsContinuous[1]);
+
+    let pdeg = -90;
+    if (parseInt(deg) < 0 || parseInt(deg) === 180 || parseInt(deg) === 0) {
+      pdeg = 90
+    }
+
+
+    const perpendicularVector = directionVector.clone().rotateDeg(pdeg).normalize();
 
     const desiredLength = 20;
     const endPoint = centerPoint.clone().add(perpendicularVector.clone().multiplyScalar(desiredLength));
 
     return [centerPoint.x, centerPoint.y, endPoint.x, endPoint.y];
   };
+
+  const getArcAngel = (isAngle) => {
+
+    let degree = calculateDegree(...redArrowPointsContinuous, redArrowPointsContinuous[0], redArrowPointsContinuous[1], redArrowPointsContinuous[0] + 40, redArrowPointsContinuous[1])
+
+    let degreeInt = parseInt(degree, 10);
+
+
+    if (isAngle) {
+      if (degreeInt < 0) {
+        degreeInt = -degreeInt
+      }
+      return degreeInt
+    } else {
+      if (degreeInt < 0) {
+        return 0
+      }
+      return -degreeInt
+    }
+
+  }
 
   return (
     <div
@@ -154,7 +183,7 @@ const App = () => {
       </div>
 
 
-      <Stage width={400} height={400} style={{ background: "lightblue", display: "flex", justifyContent: "center", padding: '1rem' }}
+      <Stage width={gridWidth} height={gridWidth} style={{ background: "lightblue", display: "flex", justifyContent: "center", padding: '1rem' }}
         onWheel={e => {
 
         }}
@@ -166,8 +195,8 @@ const App = () => {
           <Rect
             x={0}
             y={0}
-            width={400}
-            height={400}
+            width={gridWidth}
+            height={gridWidth}
             fill={'white'}
 
           />
@@ -211,7 +240,6 @@ const App = () => {
               setRedArrowPointsContinuous(updatedPoints)
 
               target.position({ x: 0, y: 0 });
-
 
               const container = e.target.getStage().container();
               container.style.cursor = "all-scroll";
@@ -269,6 +297,30 @@ const App = () => {
 
           />
 
+          <Arc
+            x={redArrowPointsContinuous[0]}
+            y={redArrowPointsContinuous[1]}
+            innerRadius={20}
+            outerRadius={20}
+            angle={getArcAngel(true)}
+            fill="yellow"
+            rotation={getArcAngel(false)}
+            stroke={'#202020'}
+            strokeWidth={1}
+          />
+
+          {/* <Line 
+            stroke={'black'}
+            strokeWidth={1}
+            points={[
+              220, 200, 220, 180,
+
+              220, 180, 210, 190,
+
+              210, 190, 210, 170
+            ]}
+            tension={1}
+          /> */}
 
           <Line
             points={[redArrowPointsContinuous[0], redArrowPointsContinuous[1], redArrowPointsContinuous[0] + 40, redArrowPointsContinuous[1]]}
@@ -282,7 +334,6 @@ const App = () => {
             strokeWidth={1}
           /> */}
           <Label
-            _useStrictMode
             x={getPoints()[2] - 10}
             y={getPoints()[3] - 10}
             onClick={e => {
@@ -297,39 +348,39 @@ const App = () => {
               const container = e.target.getStage().container();
               container.style.cursor = "default";
             }}
-
-            onDragMove={e => {
+            /* onDragEnd={(e) => {
               const target = e.target;
-              let newX = target.x();
-              let newY = target.y();
+              // let newX = target.x();
+              // let newY = target.y();
+
+              let pos = target.getRelativePointerPosition();
+              let newX = pos.x;
+              let newY = pos.y;
+
               if (snap) {
-                newX = Math.round(target.x() / grid) * grid;
-                newY = Math.round(target.y() / grid) * grid;
-              }
-              let defaultPos = redArrowPoints;
-
-              let updatedPoints = [];
-
-              if (clamp) {
-                updatedPoints = [
-                  handleClamp(defaultPos[0] + newX),
-                  handleClamp(defaultPos[1] + newY),
-                  handleClamp(defaultPos[2] + newX),
-                  handleClamp(defaultPos[3] + newY)
-                ];
-              } else {
-                updatedPoints = [
-                  defaultPos[0] + newX,
-                  defaultPos[1] + newY,
-                  defaultPos[2] + newX,
-                  defaultPos[3] + newY
-                ];
+                newX = Math.round(pos.x / grid) * grid;
+                newY = Math.round(pos.y / grid) * grid;
               }
 
+              let defaultPos = [200, 200, 200, 300];
+              defaultPos = redArrowPoints;
+
+              const updatedPoints = [
+                defaultPos[0] + newX,
+                defaultPos[1] + newY,
+                defaultPos[2] + newX,
+                defaultPos[3] + newY
+              ];
+              console.debug("updatedPoints" ,updatedPoints, defaultPos, newX, newY, target.attrs ) 
+              setRedArrowPoints(updatedPoints)
               setRedArrowPointsContinuous(updatedPoints)
 
               const container = e.target.getStage().container();
-              container.style.cursor = "all-scroll";
+              container.style.cursor = "default";
+            }} */
+            onDragMove={e => {
+
+
             }}
 
             draggable
@@ -348,16 +399,24 @@ const App = () => {
             // fontVariant="bold"
             />
           </Label>
+          <Text
+            fontSize={12}
+            x={redArrowPointsContinuous[0]}
+            y={redArrowPointsContinuous[1]}
+            offsetY={calculateDegree(...redArrowPointsContinuous, redArrowPointsContinuous[0], redArrowPointsContinuous[1], redArrowPointsContinuous[0] + 40, redArrowPointsContinuous[1]) < 0 ? 15 : -5}
+            text={calculateDegree(...redArrowPointsContinuous, redArrowPointsContinuous[0], redArrowPointsContinuous[1], redArrowPointsContinuous[0] + 40, redArrowPointsContinuous[1])}
+            fill="black"
+          />
 
           <Circle
-          _useStrictMode
+            _useStrictMode
             x={redArrowPointsContinuous[2]}
             y={redArrowPointsContinuous[3]}
             draggable
             radius={12}
-            stroke={"#666"}
-            // fill={"transparent"}
-            fill={"#ddd"}
+            // stroke={"#666"}
+            fill={"transparent"}
+            // fill={"#ddd"}
             strokeWidth={1}
             onMouseEnter={e => {
               const container = e.target.getStage().container();
@@ -388,7 +447,6 @@ const App = () => {
               setRedArrowPoints(updatedRedArrowPoints)
               setRedArrowPointsContinuous(updatedRedArrowPoints)
 
-              // target.position({ x: 0, y: 0 });
             }}
           />
 
