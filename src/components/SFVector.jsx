@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Layer, Arrow, Line, Text, Circle, Arc, Label, Tag, Shape, Group } from 'react-konva'
-import { clamp, calculateDegree, degreeToRadian, radianToDegree } from '../util/utils';
+import { Layer, Arrow, Line, Text, Circle, Arc, Label, Tag } from 'react-konva'
+import { clamp, calculateDegree } from '../util/utils';
 import Victor from "victor";
 
 /* 
@@ -230,7 +230,7 @@ const SFVector = (props) => {
   }
 
   return (
-    <Layer key={props.key}>
+    <Layer key={props.text}>
 
       {/* The below line is for debug for degree text at the correct position */}
       {/*  <Line 
