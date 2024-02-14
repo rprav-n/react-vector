@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { Layer, Arrow, Line, Text, Circle, Arc, Label, Tag, Shape } from 'react-konva'
+import React, { useState, useEffect, useRef } from 'react'
+import { Layer, Arrow, Line, Text, Circle, Arc, Label, Tag, Shape, Group } from 'react-konva'
 import { clamp, calculateDegree, degreeToRadian, radianToDegree } from '../util/utils';
 import Victor from "victor";
 
@@ -17,18 +17,14 @@ const SFVector = (props) => {
   const count = props.gridCount;
 
   // state variable
-  const [points, setPoints] = useState([0, 0, 0, 0]);
+  const [points, setPoints] = useState(props.points);
 
   const [labelPosition, setLabelPosition] = useState({ x: 0, y: 0 });
-  const [degree, setDegree] = useState(0);
+  const [degree, setDegree] = useState("90");
   const [degreeTextPosition, setDegreeTextPosition] = useState({ x: 0, y: 0 });
-  const labelSize = 22;
+  const degreeTextRef = useRef(null);
 
-  useEffect(() => {
-    if (props.points) {
-      setPoints(props.points)
-    }
-  }, [props.points])
+  const labelSize = 22;
 
   useEffect(() => {
     let basePoints = getBasePoints();
@@ -39,6 +35,24 @@ const SFVector = (props) => {
     setLabelPosition(newLabelPosition)
 
     let newDegreeTextPosition = getDegreeTextPosition();
+
+    if (props.showAngle) {
+      let degreeInt = parseInt(degree, 10);
+      if (degreeInt >= 0) {
+        newDegreeTextPosition = {
+          x: newDegreeTextPosition.x - degreeTextRef.current.textWidth / 2.5,
+          y: newDegreeTextPosition.y - degreeTextRef.current.textHeight / 2,
+        }
+      } else {
+        newDegreeTextPosition = {
+          x: newDegreeTextPosition.x - degreeTextRef.current.textWidth / 2.5,
+          y: newDegreeTextPosition.y - degreeTextRef.current.textHeight / 2,
+        }
+      }
+
+
+    }
+
     setDegreeTextPosition(newDegreeTextPosition)
 
   }, [points])
@@ -51,7 +65,7 @@ const SFVector = (props) => {
 
 
   const getBasePoints = () => {
-    return [points[0], points[1], points[0] + 40, points[1]]
+    return [points[0], points[1], points[0] + 55, points[1]]
   }
 
   const getArcAngel = (isAngle) => {
@@ -81,7 +95,7 @@ const SFVector = (props) => {
     let degreeInt = parseInt(degree);
 
     let pdeg = -90;
-    if (degreeInt < 0 || degreeInt === 180 || degreeInt === 0) {
+    if (degreeInt < 0) {
       pdeg = 90
     }
 
@@ -162,7 +176,13 @@ const SFVector = (props) => {
     if (props.clamp) {
       x = clamp(x, 0, width)
       y = clamp(y, 0, height)
+
+      // return if x == points[0] || y == points[1]
     }
+
+    if (x === points[0] && y === points[1]) return;
+
+    // console.debug("xy", x, y);
 
     let previousPoint = [...props.points];
     if (type === 'end') {
@@ -183,22 +203,46 @@ const SFVector = (props) => {
     target.position({ x: x, y: y })
   }
 
-  // TODO: Calculate the degree text position
   const getDegreeTextPosition = () => {
-    let x = points[0];
-    let y = points[1];
+    const [x1, y1, x2, y2] = points;
 
+    const midX = (x1 + x2) / 2;
+    const midY = (y1 + y2) / 2;
 
+    const directionVector = new Victor(midX - x1, midY - y1);
 
-    return { x: x, y: y }
+    const degreeInt = parseInt(degree);
+    if (degreeInt >= 0 && degreeInt < 35) {
+      return { x: x1, y: y1 + 10 }
+    } else if (degreeInt <= 0 && degreeInt > -35) {
+      return { x: x1, y: y1 - 10 }
+    }
+    const angle = degreeInt / 2;
+    const perpendicularVector = directionVector.clone().rotateDeg(angle).normalize();
+
+    const desiredLength = 50;
+    const x = x1 + perpendicularVector.x * desiredLength;
+    const y = y1 + perpendicularVector.y * desiredLength;
+
+    let obj = { x: x, y: y };
+
+    return obj;
   }
 
-  // TODO: Add triangle to angle end and calculate its rotation and position
-
   return (
-    <Layer>
+    <Layer key={props.key}>
 
-    
+      {/* The below line is for debug for degree text at the correct position */}
+      {/*  <Line 
+        points={[
+          points[0],
+          points[1],
+          getDegreeTextPosition().x,
+          getDegreeTextPosition().y
+        ]}
+        stroke={"#bb0000"}
+      /> */}
+
       {/* Arrow */}
       <Arrow
         _useStrictMode
@@ -212,6 +256,34 @@ const SFVector = (props) => {
         onDragMove={(event) => handleArrowOnDrag(event, 'move')}
         onDragEnd={(event) => handleArrowOnDrag(event, 'end')}
       />
+
+      {/* Show Components for x-axis */}
+
+      {props.showComponents &&
+        <Arrow
+          points={[points[0], points[1], points[2], points[1]]}
+          stroke={props.arrowStorke}
+          fill={props.arrowStorke}
+          dashEnabled
+          dash={[6]}
+          strokeWidth={4}
+        />
+      }
+
+      {/* Show Components for x-axis */}
+      {props.showComponents &&
+        <Arrow
+          points={[points[2], points[3], points[2], points[1]]}
+          stroke={props.arrowStorke}
+          fill={props.arrowStorke}
+          dashEnabled
+          pointerAtBeginning
+          pointerAtEnding={false}
+          dash={[6]}
+          strokeWidth={4}
+        />
+      }
+
 
 
       {/* Circle - This is the point where the student can drag the arrow by its TIP */}
@@ -235,8 +307,8 @@ const SFVector = (props) => {
         <Line
           points={getBasePoints()}
           offsetX={1}
-          stroke={'black'}
-          strokeWidth={2}
+          stroke={'#000'}
+          strokeWidth={1.5}
         />
       }
 
@@ -258,10 +330,10 @@ const SFVector = (props) => {
       {/* Degree Text */}
       {props.showAngle &&
         <Text
+          ref={degreeTextRef}
           fontSize={14}
           x={degreeTextPosition.x}
           y={degreeTextPosition.y}
-          offsetY={degree < 0 ? 15 : -5}
           text={degree + "°"}
           fill="black"
           fontStyle='500'
@@ -272,17 +344,17 @@ const SFVector = (props) => {
       <Label
         x={labelPosition.x}
         y={labelPosition.y}
+        onClick={() => props.updateActive(true)}
       >
         <Tag
           fill={props.active ? "#f3f383" : "#f0f0f0"}
           cornerRadius={4}
-          stroke={props.active ? "#333" : "#ddd"}
+          stroke={props.active ? "#e4e4e4" : "#ddd"}
           strokeWidth={1}
         />
         <Text
           text={props.text}
           fill="black"
-
           fontSize={22}
           width={labelSize}
           height={labelSize}

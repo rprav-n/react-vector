@@ -14,7 +14,7 @@ const SFOrigin = (props) => {
             x: 100,
             y: height - 100,
         })
-    }, []);
+    }, [width, height]);
 
     const handleMousePointer = (event, cursor) => {
         const container = event.target.getStage().container();
