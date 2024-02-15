@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Layer, Arrow, Line, Text, Circle, Arc, Label, Tag } from 'react-konva'
-import { clamp, calculateDegree } from '../util/utils';
+import { Layer, Arrow, Line, Text, Circle, Arc, Label, Tag, RegularPolygon } from 'react-konva'
+import { clamp, calculateDegree, degreeToRadian, radianToDegree } from '../util/utils';
 import Victor from "victor";
 
 /* 
@@ -18,18 +18,20 @@ const SFVector = (props) => {
 
   // state variable
   const [points, setPoints] = useState(props.points);
-
+  const [length, setLength] = useState(0);
   const [labelPosition, setLabelPosition] = useState({ x: 0, y: 0 });
-  const [degree, setDegree] = useState("90");
+  const [degree, setDegree] = useState(90);
   const [degreeTextPosition, setDegreeTextPosition] = useState({ x: 0, y: 0 });
   const degreeTextRef = useRef(null);
+  const [angleTrianglePos, setAngleTrianglePos] = useState({ x: 0, y: 0 });
 
   const labelSize = 22;
 
   useEffect(() => {
     let basePoints = getBasePoints();
-    let degree = calculateDegree(...points, ...basePoints);
-    setDegree(degree.toFixed(1))
+    let degree = calculateDegree(...points, ...basePoints).toFixed(1);
+    let degreeInt = parseFloat(degree);
+    setDegree(degreeInt);
 
     let newLabelPosition = getLabelPosition();
     setLabelPosition(newLabelPosition)
@@ -37,7 +39,7 @@ const SFVector = (props) => {
     let newDegreeTextPosition = getDegreeTextPosition();
 
     if (props.showAngle) {
-      let degreeInt = parseInt(degree, 10);
+      // if (length >= 40) {
       if (degreeInt >= 0) {
         newDegreeTextPosition = {
           x: newDegreeTextPosition.x - degreeTextRef.current.textWidth / 2.5,
@@ -49,13 +51,26 @@ const SFVector = (props) => {
           y: newDegreeTextPosition.y - degreeTextRef.current.textHeight / 2,
         }
       }
+      // }
 
+      let newAngleTrianglePos = getAngleTrianglePosition()
+      setAngleTrianglePos(newAngleTrianglePos);
 
     }
+
+    calculateAndSetMagnitude(points)
 
     setDegreeTextPosition(newDegreeTextPosition)
 
   }, [points])
+
+  const calculateAndSetMagnitude = (dataPoints) => {
+    let vecA = new Victor(dataPoints[0], dataPoints[1])
+    let vecB = new Victor(dataPoints[2], dataPoints[3])
+
+    let distance = vecA.distance(vecB)
+    setLength(distance);
+  }
 
 
   const handleMousePointer = (event, cursor) => {
@@ -65,12 +80,12 @@ const SFVector = (props) => {
 
 
   const getBasePoints = () => {
-    return [points[0], points[1], points[0] + 55, points[1]]
+    return [points[0], points[1], points[0] + (length < 40 ? 30 : 50), points[1]]
   }
 
   const getArcAngel = (isAngle) => {
 
-    let degreeInt = parseInt(degree, 10);
+    let degreeInt = degree;
 
     if (isAngle) {
       if (degreeInt < 0) {
@@ -92,7 +107,7 @@ const SFVector = (props) => {
     const centerPoint = new Victor((x1 + x2) / 2, (y1 + y2) / 2);
     const directionVector = new Victor(x2 - x1, y2 - y1);
 
-    let degreeInt = parseInt(degree);
+    let degreeInt = degree;
 
     let pdeg = -90;
     if (degreeInt < 0) {
@@ -148,7 +163,7 @@ const SFVector = (props) => {
       handleMousePointer(event, 'all-scroll')
       setPoints(newPoints);
     } else {
-      handleMousePointer(event, 'default')
+      // handleMousePointer(event, 'default')
       // Update the points on the parent element ie props.points
       props.updatePoints(newPoints);
     }
@@ -182,7 +197,6 @@ const SFVector = (props) => {
 
     if (x === points[0] && y === points[1]) return;
 
-    // console.debug("xy", x, y);
 
     let previousPoint = [...props.points];
     if (type === 'end') {
@@ -195,7 +209,7 @@ const SFVector = (props) => {
       handleMousePointer(event, 'pointer')
       setPoints(newPoints);
     } else {
-      handleMousePointer(event, 'default')
+      // handleMousePointer(event, 'default')
       // Update the points on the parent element ie props.points
       props.updatePoints(newPoints);
     }
@@ -211,16 +225,44 @@ const SFVector = (props) => {
 
     const directionVector = new Victor(midX - x1, midY - y1);
 
-    const degreeInt = parseInt(degree);
-    if (degreeInt >= 0 && degreeInt < 35) {
-      return { x: x1, y: y1 + 10 }
-    } else if (degreeInt <= 0 && degreeInt > -35) {
-      return { x: x1, y: y1 - 10 }
+    const degreeInt = degree;
+     if (degreeInt >= 0 && degreeInt < 35) {
+      return { x: x1 + 30, y: y1 + 12 }
+    } else if (degreeInt < 0 && degreeInt > -35) {
+      return { x: x1 + 30, y: y1 - 12 }
     }
-    const angle = degreeInt / 2;
+
+    /* let angle = degreeInt / 2;
+    if (length < 40) {
+      angle = degreeInt / 1.5
+    } */
+
+    let angle = degreeInt / 1.75;
     const perpendicularVector = directionVector.clone().rotateDeg(angle).normalize();
 
-    const desiredLength = 50;
+    const desiredLength = length < 40 ? 30 : 50;
+    const x = x1 + perpendicularVector.x * desiredLength;
+    const y = y1 + perpendicularVector.y * desiredLength;
+
+    let obj = { x: x, y: y };
+
+    return obj;
+  }
+
+  const getAngleTrianglePosition = () => {
+    const [x1, y1, x2, y2] = points;
+
+    const midX = (x1 + x2) / 2;
+    const midY = (y1 + y2) / 2;
+
+    const directionVector = new Victor(midX - x1, midY - y1);
+
+    let angle = degree < 0 ? -10 : 10;
+    // angle = 0;
+
+    const perpendicularVector = directionVector.clone().rotateDeg(angle).normalize();
+
+    const desiredLength = length < 40 ? 20 : 30;
     const x = x1 + perpendicularVector.x * desiredLength;
     const y = y1 + perpendicularVector.y * desiredLength;
 
@@ -233,7 +275,7 @@ const SFVector = (props) => {
     <Layer key={props.text}>
 
       {/* The below line is for debug for degree text at the correct position */}
-      {/*  <Line 
+      {/* <Line
         points={[
           points[0],
           points[1],
@@ -243,22 +285,60 @@ const SFVector = (props) => {
         stroke={"#bb0000"}
       /> */}
 
+      {/* This below line is to debug the angle arrow */}
+      {/* <Line
+        points={[
+          points[0],
+          points[1],
+          angleTrianglePos.x,
+          angleTrianglePos.y
+        ]}
+        stroke={"green"}
+        strokeWidth={1}
+      /> */}
+
+
+      {/* Arc angle line */}
+      {props.showAngle &&
+        <Arc
+          x={points[0]}
+          y={points[1]}
+          innerRadius={length < 40 ? 20 : 30}
+          outerRadius={length < 40 ? 20 : 30}
+          angle={getArcAngel(true)}
+          fill="transparent"
+          rotation={getArcAngel(false)}
+          stroke={'#333'}
+          strokeWidth={2}
+        />
+      }
+
       {/* Arrow */}
       <Arrow
         points={points}
         stroke={props.arrowStorke}
         strokeWidth={4}
         fill={props.arrowStorke}
-        /* draggable
-        onMouseEnter={(event) => handleMousePointer(event, 'all-scroll')}
-        onMouseLeave={(event) => handleMousePointer(event, 'default')}
-        onDragMove={(event) => handleArrowOnDrag(event, 'move')}
-        onDragEnd={(event) => handleArrowOnDrag(event, 'end')} */
+      /* draggable
+      onMouseEnter={(event) => handleMousePointer(event, 'all-scroll')}
+      onMouseLeave={(event) => handleMousePointer(event, 'default')}
+      onDragMove={(event) => handleArrowOnDrag(event, 'move')}
+      onDragEnd={(event) => handleArrowOnDrag(event, 'end')} */
       />
 
-      <Line 
+      {/* TODO: Custom arrow tip */}
+      {/* <RegularPolygon
+        x={points[2]}
+        y={points[3]}
+        sides={3}
+        radius={6}
+        rotationDeg={degree}
+        fill="green"
+      /> */}
+
+      <Line
         points={points}
-        stroke={props.debug ? '#ddd' :'transparent'}
+        stroke={props.debug ? '#ddd' : 'transparent'}
         strokeWidth={20}
         draggable
         onMouseEnter={(event) => handleMousePointer(event, 'all-scroll')}
@@ -269,46 +349,29 @@ const SFVector = (props) => {
 
       {/* Show Components for x-axis */}
 
-      {props.showComponents &&
+      {props.showComponents && degree > 0 &&
         <Arrow
           points={[points[0], points[1], points[2], points[1]]}
           stroke={props.arrowStorke}
           fill={props.arrowStorke}
           dashEnabled
           dash={[6]}
-          strokeWidth={4}
+          strokeWidth={3}
         />
       }
 
-      {/* Show Components for x-axis */}
-      {props.showComponents &&
+
+      {/* Show Components for y-axis */}
+      {props.showComponents && degree > 0 &&
         <Arrow
-          points={[points[2], points[3], points[2], points[1]]}
+          points={[points[2], points[1], points[2], points[3]]}
           stroke={props.arrowStorke}
           fill={props.arrowStorke}
           dashEnabled
-          pointerAtBeginning
-          pointerAtEnding={false}
           dash={[6]}
-          strokeWidth={4}
+          strokeWidth={3}
         />
       }
-
-
-
-      {/* Circle - This is the point where the student can drag the arrow by its TIP */}
-      <Circle
-        x={points[2]}
-        y={points[3]}
-        radius={20}
-        stroke={props.debug ? '#666' :'transparent'} 
-        fill={props.debug ? '#ddd' :'transparent'} 
-        draggable
-        onMouseEnter={(event) => handleMousePointer(event, 'pointer')}
-        onMouseLeave={(event) => handleMousePointer(event, 'default')}
-        onDragMove={(event) => handleCircleOnDrag(event, 'move')}
-        onDragEnd={(event) => handleCircleOnDrag(event, 'end')}
-      />
 
 
       {/* Base line */}
@@ -321,18 +384,16 @@ const SFVector = (props) => {
         />
       }
 
-      {/* Arc angle line */}
+
+      {/* Angle arrow */}
       {props.showAngle &&
-        <Arc
-          x={points[0]}
-          y={points[1]}
-          innerRadius={30}
-          outerRadius={30}
-          angle={getArcAngel(true)}
-          fill="transparent"
-          rotation={getArcAngel(false)}
-          stroke={'#333'}
-          strokeWidth={2}
+        <RegularPolygon
+          x={angleTrianglePos.x}
+          y={angleTrianglePos.y}
+          sides={3}
+          radius={6}
+          rotation={degree < 0 ? (180 - degree) : (360 - degree)}
+          fill={(degree > 15 || degree < -15) ? 'black' : 'transparent'}
         />
       }
 
@@ -340,10 +401,10 @@ const SFVector = (props) => {
       {props.showAngle &&
         <Text
           ref={degreeTextRef}
-          fontSize={14}
+          fontSize={15}
           x={degreeTextPosition.x}
           y={degreeTextPosition.y}
-          text={degree + "°"}
+          text={degree.toFixed(1) + "°"}
           fill="black"
           fontStyle='500'
         />
@@ -372,6 +433,21 @@ const SFVector = (props) => {
           fontVariant='italic'
         />
       </Label>
+
+
+      {/* Circle - This is the point where the student can drag the arrow by its TIP */}
+      <Circle
+        x={points[2]}
+        y={points[3]}
+        radius={20}
+        stroke={props.debug ? '#666' : 'transparent'}
+        fill={props.debug ? '#ddd' : 'transparent'}
+        draggable
+        onMouseEnter={(event) => handleMousePointer(event, 'pointer')}
+        onMouseLeave={(event) => handleMousePointer(event, 'default')}
+        onDragMove={(event) => handleCircleOnDrag(event, 'move')}
+        onDragEnd={(event) => handleCircleOnDrag(event, 'end')}
+      />
 
 
     </Layer>

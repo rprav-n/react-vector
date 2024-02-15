@@ -5,6 +5,7 @@ const SFGrid = (props) => {
 
     const { width, height } = props.gridSize;
     const count = props.gridCount;
+    const cellSize = props.gridCellSize;
 
     const linesA = [];
     const linesB = [];

@@ -9,8 +9,10 @@ const alphabets = "abcdefghijklmnopqrstuvwxyz";
 function App() {
 
   const [gridSize, setGridSize] = useState({
-    width: window.innerWidth,
-    height: window.innerHeight / 2,
+    // width: window.innerWidth,
+    // height: window.innerHeight / 2,
+    width: 800,
+    height: 400,
   });
   const [gridCount, setGridCount] = useState(20);
   const [showAngle, setShowAngle] = useState(true);
@@ -70,7 +72,7 @@ function App() {
           </div>
           <div>
             <label htmlFor='count'>Grid Count: {gridCount}</label>
-            <input type="range" name='count' id='count' step={10} min={10} max={60} value={gridCount} onChange={e => {
+            <input type="range" name='count' id='count' step={20} min={20} max={60} value={gridCount} onChange={e => {
               setGridCount(parseInt(e.target.value, 10));
             }} />
           </div>
