@@ -28,7 +28,7 @@ function App() {
     let newVector = {
       points: [300, 300, 300, 200],
       active: true,
-      color: '#bb0000',
+      color: '#0aaafa',
       text: alphabets.charAt(vectors.length),
     }
 

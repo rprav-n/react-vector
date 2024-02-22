@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Layer, Arrow, Line, Text, Circle, Arc, Label, Tag, RegularPolygon } from 'react-konva'
+import { Layer, Arrow, Line, Text, Circle, Arc, Label, Tag, RegularPolygon, Group } from 'react-konva'
 import { clamp, calculateDegree, degreeToRadian, radianToDegree } from '../util/utils';
 import Victor from "victor";
 
@@ -226,7 +226,7 @@ const SFVector = (props) => {
     const directionVector = new Victor(midX - x1, midY - y1);
 
     const degreeInt = degree;
-     if (degreeInt >= 0 && degreeInt < 35) {
+    if (degreeInt >= 0 && degreeInt < 35) {
       return { x: x1 + 30, y: y1 + 12 }
     } else if (degreeInt < 0 && degreeInt > -35) {
       return { x: x1 + 30, y: y1 - 12 }
@@ -240,7 +240,7 @@ const SFVector = (props) => {
     let angle = degreeInt / 1.75;
     const perpendicularVector = directionVector.clone().rotateDeg(angle).normalize();
 
-    const desiredLength = length < 40 ? 30 : 50;
+    const desiredLength = length < 40 ? 40 : 50;
     const x = x1 + perpendicularVector.x * desiredLength;
     const y = y1 + perpendicularVector.y * desiredLength;
 
@@ -262,7 +262,7 @@ const SFVector = (props) => {
 
     const perpendicularVector = directionVector.clone().rotateDeg(angle).normalize();
 
-    const desiredLength = length < 40 ? 20 : 30;
+    const desiredLength = length < 40 ? 15 : 30;
     const x = x1 + perpendicularVector.x * desiredLength;
     const y = y1 + perpendicularVector.y * desiredLength;
 
@@ -286,7 +286,7 @@ const SFVector = (props) => {
       /> */}
 
       {/* This below line is to debug the angle arrow */}
-      {/* <Line
+     {/*  <Line
         points={[
           points[0],
           points[1],
@@ -303,8 +303,8 @@ const SFVector = (props) => {
         <Arc
           x={points[0]}
           y={points[1]}
-          innerRadius={length < 40 ? 20 : 30}
-          outerRadius={length < 40 ? 20 : 30}
+          innerRadius={length < 40 ? 15 : 30}
+          outerRadius={length < 40 ? 15 : 30}
           angle={getArcAngel(true)}
           fill="transparent"
           rotation={getArcAngel(false)}
@@ -313,28 +313,42 @@ const SFVector = (props) => {
         />
       }
 
-      {/* Arrow */}
-      <Arrow
-        points={points}
-        stroke={props.arrowStorke}
-        strokeWidth={4}
-        fill={props.arrowStorke}
-      /* draggable
-      onMouseEnter={(event) => handleMousePointer(event, 'all-scroll')}
-      onMouseLeave={(event) => handleMousePointer(event, 'default')}
-      onDragMove={(event) => handleArrowOnDrag(event, 'move')}
-      onDragEnd={(event) => handleArrowOnDrag(event, 'end')} */
-      />
+      <Group
 
-      {/* TODO: Custom arrow tip */}
-      {/* <RegularPolygon
-        x={points[2]}
-        y={points[3]}
-        sides={3}
-        radius={6}
-        rotationDeg={degree}
-        fill="green"
-      /> */}
+      >
+        {/* Arrow */}
+        <Arrow
+          points={points}
+          stroke={props.arrowStorke}
+          strokeWidth={length < 40 ? 3 : 4}
+          fill={props.arrowStorke}
+          // pointerAtEnding={true}
+        />
+
+        {/* TODO: Custom arrow tip */}
+        {/* <RegularPolygon
+          x={points[2]}
+          y={points[3]}
+          offsetY={Math.sin(degreeToRadian(degree)) - 8}
+          sides={3}
+          radius={length < 40 ? 7 : 8}
+          rotationDeg={((Math.atan2(points[3] - points[1], points[2] - points[0]) * 180) / Math.PI) + 90}
+          fill={props.arrowStorke}
+        /> */}
+
+        
+        {/* <Line
+          points={[
+            points[2], points[3],   // Vertex 1 (x, y)
+            points[2] - 10, points[3] + 20, // Vertex 2 (x, y)
+            points[2] + 10, points[3] + 20,  // Vertex 3 (x, y)
+          ]}
+          closed
+          fill={props.arrowStorke}
+        /> */}
+      </Group>
+
+
 
       <Line
         points={points}
@@ -348,28 +362,27 @@ const SFVector = (props) => {
       />
 
       {/* Show Components for x-axis */}
-
-      {props.showComponents && degree > 0 &&
+      {props.showComponents && parseInt(degree) !== 90 && parseInt(degree) !== -90 &&
         <Arrow
           points={[points[0], points[1], points[2], points[1]]}
           stroke={props.arrowStorke}
           fill={props.arrowStorke}
           dashEnabled
           dash={[6]}
-          strokeWidth={3}
+          strokeWidth={2}
         />
       }
 
 
       {/* Show Components for y-axis */}
-      {props.showComponents && degree > 0 &&
+      {props.showComponents && degree !== 180 &&
         <Arrow
           points={[points[2], points[1], points[2], points[3]]}
           stroke={props.arrowStorke}
           fill={props.arrowStorke}
           dashEnabled
           dash={[6]}
-          strokeWidth={3}
+          strokeWidth={2}
         />
       }
 
@@ -391,7 +404,7 @@ const SFVector = (props) => {
           x={angleTrianglePos.x}
           y={angleTrianglePos.y}
           sides={3}
-          radius={6}
+          radius={length < 40 ? 5 : 6}
           rotation={degree < 0 ? (180 - degree) : (360 - degree)}
           fill={(degree > 15 || degree < -15) ? 'black' : 'transparent'}
         />
@@ -422,10 +435,13 @@ const SFVector = (props) => {
           stroke={props.active ? "#e4e4e4" : "#ddd"}
           strokeWidth={1}
         />
+       
         <Text
-          text={props.text}
+          text={"→\n"+props.text}
+          lineHeight={0.5}
+          // text={"\u20D7\na"}
           fill="black"
-          fontSize={22}
+          fontSize={20}
           width={labelSize}
           height={labelSize}
           align="center"
@@ -439,7 +455,7 @@ const SFVector = (props) => {
       <Circle
         x={points[2]}
         y={points[3]}
-        radius={20}
+        radius={length < 40 ? 10 : 20}
         stroke={props.debug ? '#666' : 'transparent'}
         fill={props.debug ? '#ddd' : 'transparent'}
         draggable
@@ -448,7 +464,6 @@ const SFVector = (props) => {
         onDragMove={(event) => handleCircleOnDrag(event, 'move')}
         onDragEnd={(event) => handleCircleOnDrag(event, 'end')}
       />
-
 
     </Layer>
   )
