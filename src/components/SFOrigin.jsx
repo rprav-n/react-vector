@@ -6,6 +6,7 @@ const SFOrigin = (props) => {
 
     const { width, height } = props.gridSize;
     const count = props.gridCount;
+    const cellSize = props.cellSize;
 
     const [position, setPosition] = useState({ x: 0, y: 0 })
 
@@ -19,7 +20,7 @@ const SFOrigin = (props) => {
     let xAxisPoints = [];
     let yAxisPoints = [];
 
-    for (let i = 0; i <= width; i += 100) {
+    for (let i = 0; i <= width; i += cellSize * count) {
         if (i !== 0 && i !== width) {
             xAxisPoints.push(i);
         }
@@ -38,19 +39,21 @@ const SFOrigin = (props) => {
                 strokeWidth={2}
             />
         );
-        if (index !== 0 && index % 2 !== 0) {
-            let val = x < position.x ? -(startPosX - x) : x - position.x;
-            // val /= count;
+        let val = x < position.x ? -(startPosX - x) : x - position.x;
+        val /= count
+        if (index % 2 === 0 ) {
             textsX.push(
                 <Text
                     key={index}
                     x={x - count / 2}
                     y={position.y + count}
                     text={val}
+                    fontSize={16}
+                    fontVariant='bold'
+                    fill={'#666'}
                 />
             );
         }
-
         startPosX -= x;
     });
 
@@ -64,18 +67,22 @@ const SFOrigin = (props) => {
                 strokeWidth={2}
             />
         );
-        if (index !== 0 && index % 2 !== 0) {
-            let val = y < position.y ? -(startPosY - y) : y - position.y;
-            // val /= count;
+        let val = y < position.y ? - (startPosY - y) : y - position.y;
+        val /= count;
+        if (index % 2 === 0 ) {
             textsY.push(
                 <Text
                     key={index}
-                    x={position.x + count}
+                    x={position.x - count * cellSize/2}
                     y={y - count / 2}
                     text={val}
+                    fontSize={16}
+                    fontVariant='bold'
+                    fill={'#666'}
                 />
             );
         }
+        
 
         startPosY -= y;
     });

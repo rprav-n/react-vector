@@ -5,14 +5,14 @@ const SFGrid = (props) => {
 
     const { width, height } = props.gridSize;
     const count = props.gridCount;
-    const cellSize = props.gridCellSize;
+    const cellSize = props.cellSize;
 
     const linesA = [];
     const linesB = [];
 
 
     // X axis
-    for (let i = 0; i < (height + 20) / count; i++) {
+    for (let i = 0; i < (height + count) / count; i++) {
         let stroke = "#e1e1e1";
         let strokeWidth = 1;
         if (i % 5 === 0) {
@@ -31,7 +31,7 @@ const SFGrid = (props) => {
 
 
     // Y axis
-    for (let j = 0; j < (width + 20) / count; j++) {
+    for (let j = 0; j < (width + count) / count; j++) {
 
         let stroke = "#e1e1e1";
         let strokeWidth = 1;
@@ -50,6 +50,13 @@ const SFGrid = (props) => {
         )
     }
 
+    const numLinesX = Math.floor(width / cellSize);
+    const numLinesY = Math.floor(height / cellSize);
+
+    // Create arrays to store grid lines
+    const linesX = Array.from(Array(numLinesX + 1).keys());
+    const linesY = Array.from(Array(numLinesY + 1).keys());
+
     return (
         <Layer>
             <Rect
@@ -62,6 +69,23 @@ const SFGrid = (props) => {
 
             {linesA}
             {linesB}
+
+            {/* {linesX.map((i) => (
+                <Line
+                    key={`x_${i}`}
+                    points={[i * cellSize, 0, i * cellSize, height]}
+                    stroke="#ccc"
+                    strokeWidth={1}
+                />
+            ))}
+            {linesY.map((j) => (
+                <Line
+                    key={`y_${j}`}
+                    points={[0, j * cellSize, width, j * cellSize]}
+                    stroke="#ccc"
+                    strokeWidth={1}
+                />
+            ))} */}
         </Layer>
     )
 }

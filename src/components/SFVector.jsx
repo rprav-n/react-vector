@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Layer, Arrow, Line, Text, Circle, Arc, Label, Tag, RegularPolygon, Group } from 'react-konva'
-import { clamp, calculateDegree, degreeToRadian, radianToDegree } from '../util/utils';
+import { clamp, calculateDegree, degreeToRadian } from '../util/utils';
 import Victor from "victor";
 
 /* 
@@ -35,8 +35,8 @@ const SFVector = (props) => {
 
     let newLabelPosition = getLabelPosition();
     setLabelPosition(newLabelPosition)
-
-    let newDegreeTextPosition = getDegreeTextPosition();
+    
+    let newDegreeTextPosition = getDegreeTextPosition(points);
 
     if (props.showAngle) {
       // if (length >= 40) {
@@ -59,7 +59,6 @@ const SFVector = (props) => {
     }
 
     calculateAndSetMagnitude(points)
-
     setDegreeTextPosition(newDegreeTextPosition)
 
   }, [points])
@@ -163,8 +162,6 @@ const SFVector = (props) => {
       handleMousePointer(event, 'all-scroll')
       setPoints(newPoints);
     } else {
-      // handleMousePointer(event, 'default')
-      // Update the points on the parent element ie props.points
       props.updatePoints(newPoints);
     }
 
@@ -217,8 +214,8 @@ const SFVector = (props) => {
     target.position({ x: x, y: y })
   }
 
-  const getDegreeTextPosition = () => {
-    const [x1, y1, x2, y2] = points;
+  const getDegreeTextPosition = (dataPoints) => {
+    const [x1, y1, x2, y2] = dataPoints;
 
     const midX = (x1 + x2) / 2;
     const midY = (y1 + y2) / 2;
@@ -245,6 +242,7 @@ const SFVector = (props) => {
     const y = y1 + perpendicularVector.y * desiredLength;
 
     let obj = { x: x, y: y };
+    console.debug("obj", obj)
 
     return obj;
   }
@@ -271,9 +269,44 @@ const SFVector = (props) => {
     return obj;
   }
 
+
+  const modifiedPoints = (dataPoints) => {
+    const [x1, y1, x2, y2] = dataPoints;
+
+    // const angleInRadians = degreeToRadian(degree)
+    
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+
+    const vectorLength = Math.sqrt(dx*dx + dy*dy);
+
+    const unitDx = dx / vectorLength;
+    const unitDy = dy / vectorLength;
+
+    const newX2 = x1 + (vectorLength - 10) * unitDx;
+    const newY2 = y1 + (vectorLength - 10) * unitDy;
+
+    return [x1, y1, newX2, newY2]
+  }
+
+  const calculateMagnitude = (dataPoints) => {
+    const [x1, y1, x2, y2] = dataPoints;
+    let vecA = new Victor(x1, y1);
+    let vecB = new Victor(x2, y2);
+
+
+    let magnitude = vecA.distance(vecB) / count;
+
+    return magnitude.toFixed(1);
+  }
+
   return (
     <Layer key={props.text}>
-
+      <Text 
+        x={200}
+        y={200}
+        text={calculateMagnitude(points)}
+      />
       {/* The below line is for debug for degree text at the correct position */}
       {/* <Line
         points={[
@@ -286,7 +319,7 @@ const SFVector = (props) => {
       /> */}
 
       {/* This below line is to debug the angle arrow */}
-     {/*  <Line
+      {/*  <Line
         points={[
           points[0],
           points[1],
@@ -316,32 +349,34 @@ const SFVector = (props) => {
       <Group
 
       >
-        {/* Arrow */}
-        <Arrow
-          points={points}
+        {/* Line */}
+        <Line
+          points={modifiedPoints(points)}
           stroke={props.arrowStorke}
           strokeWidth={length < 40 ? 3 : 4}
           fill={props.arrowStorke}
-          // pointerAtEnding={true}
+        // pointerAtEnding={true}
         />
 
         {/* TODO: Custom arrow tip */}
-        {/* <RegularPolygon
+        <RegularPolygon
           x={points[2]}
           y={points[3]}
           offsetY={Math.sin(degreeToRadian(degree)) - 8}
           sides={3}
+          // height={3}
           radius={length < 40 ? 7 : 8}
-          rotationDeg={((Math.atan2(points[3] - points[1], points[2] - points[0]) * 180) / Math.PI) + 90}
+          scaleY={1.3}
+          rotation={((Math.atan2(points[3] - points[1], points[2] - points[0]) * 180) / Math.PI) + 90}
           fill={props.arrowStorke}
-        /> */}
+        />
 
-        
+
         {/* <Line
           points={[
             points[2], points[3],   // Vertex 1 (x, y)
-            points[2] - 10, points[3] + 20, // Vertex 2 (x, y)
-            points[2] + 10, points[3] + 20,  // Vertex 3 (x, y)
+            points[2] - 20, points[3] + 30, // Vertex 2 (x, y)
+            points[2] + 20, points[3] + 30,  // Vertex 3 (x, y)
           ]}
           closed
           fill={props.arrowStorke}
@@ -359,31 +394,62 @@ const SFVector = (props) => {
         onMouseLeave={(event) => handleMousePointer(event, 'default')}
         onDragMove={(event) => handleArrowOnDrag(event, 'move')}
         onDragEnd={(event) => handleArrowOnDrag(event, 'end')}
+        onClick={() => props.updateActive(true)}
       />
 
       {/* Show Components for x-axis */}
-      {props.showComponents && parseInt(degree) !== 90 && parseInt(degree) !== -90 &&
-        <Arrow
-          points={[points[0], points[1], points[2], points[1]]}
-          stroke={props.arrowStorke}
-          fill={props.arrowStorke}
-          dashEnabled
-          dash={[6]}
-          strokeWidth={2}
-        />
+      {props.showComponents && Math.abs(degree) !== 90 &&
+        <Group>
+          <Arrow
+            // points={[points[0], points[1], points[2], points[1]]}
+            points={modifiedPoints([points[0], points[1], points[2], points[1]])}
+            stroke={props.arrowStorke}
+            fill={props.arrowStorke}
+            dashEnabled
+            dash={[7, 4]}
+            strokeWidth={length < 40 ? 3 : 4}
+            pointerAtBeginning={false}
+            pointerAtEnding={false}
+          />
+          <RegularPolygon
+            x={points[2]}
+            y={points[1]}
+            offsetY={Math.sin(degreeToRadian(degree)) - 8}
+            sides={3}
+            scaleY={1.3}
+            radius={length < 40 ? 7 : 8}
+            rotation={Math.abs(degree) > 90 ? -90 : 90}
+            fill={props.arrowStorke}
+          />
+        </Group>
       }
 
 
       {/* Show Components for y-axis */}
-      {props.showComponents && degree !== 180 &&
+      {props.showComponents && (Math.abs(degree) !== 0 && Math.abs(degree) !== 90 && Math.abs(degree) !== 180) &&
+      <Group>
         <Arrow
-          points={[points[2], points[1], points[2], points[3]]}
+          // points={[points[2], points[1], points[2], points[3]]}
+          points={modifiedPoints([points[2], points[1], points[2], points[3]])}
           stroke={props.arrowStorke}
           fill={props.arrowStorke}
           dashEnabled
-          dash={[6]}
-          strokeWidth={2}
+          dash={[7, 4]}
+          strokeWidth={length < 40 ? 3 : 4}
+          pointerAtBeginning={false}
+          pointerAtEnding={false}
         />
+        <RegularPolygon
+            x={points[2]}
+            y={points[3]}
+            offsetY={Math.sin(degreeToRadian(degree)) - 8}
+            sides={3}
+            scaleY={1.3}
+            rotation={degree < 0 ? 180 : 0}
+            radius={length < 40 ? 7 : 8}
+            fill={props.arrowStorke}
+          />
+        </Group>
       }
 
 
@@ -417,6 +483,8 @@ const SFVector = (props) => {
           fontSize={15}
           x={degreeTextPosition.x}
           y={degreeTextPosition.y}
+          // x={325}
+          // y={261}
           text={degree.toFixed(1) + "°"}
           fill="black"
           fontStyle='500'
@@ -435,13 +503,13 @@ const SFVector = (props) => {
           stroke={props.active ? "#e4e4e4" : "#ddd"}
           strokeWidth={1}
         />
-       
+
         <Text
-          text={"→\n"+props.text}
+          text={"→\n" + props.text}
           lineHeight={0.5}
           // text={"\u20D7\na"}
           fill="black"
-          fontSize={20}
+          fontSize={21}
           width={labelSize}
           height={labelSize}
           align="center"
@@ -463,6 +531,7 @@ const SFVector = (props) => {
         onMouseLeave={(event) => handleMousePointer(event, 'default')}
         onDragMove={(event) => handleCircleOnDrag(event, 'move')}
         onDragEnd={(event) => handleCircleOnDrag(event, 'end')}
+        onClick={() => props.updateActive(true)}
       />
 
     </Layer>
