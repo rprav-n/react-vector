@@ -31,6 +31,7 @@ class SFVectorClass extends Component {
 
             yComponentLength: 0,
             yComponentLablePos: { x: 0, y: 0 },
+            yComponentOriginLablePos: { x: 0, y: 0 },
         }
 
     }
@@ -47,10 +48,12 @@ class SFVectorClass extends Component {
         let points = this.state.points;
         let xComponentPoints = [points[0], points[1], points[2], points[1]];
         let yComponentPoints = [points[2], points[1], points[2], points[3]];
+        let yComponentOriginPoints = [points[0], points[1], points[0], points[3]];
 
         this.calculateLabelPositionFor("vector", points);
         this.calculateLabelPositionFor("x", xComponentPoints);
         this.calculateLabelPositionFor("y", yComponentPoints);
+        this.calculateLabelPositionFor("y-origin", yComponentOriginPoints);
     }
 
     componentDidUpdate(prevProps, prevState) {
@@ -77,12 +80,15 @@ class SFVectorClass extends Component {
             let points = this.state.points;
             let xComponentPoints = [points[0], points[1], points[2], points[1]];
             let yComponentPoints = [points[2], points[1], points[2], points[3]];
+            let yComponentOriginPoints = [points[0], points[1], points[0], points[3]];
+            
             this.calculateComponentLength("x", xComponentPoints)
             this.calculateComponentLength("y", yComponentPoints)
 
             this.calculateLabelPositionFor("vector", points);
             this.calculateLabelPositionFor("x", xComponentPoints);
             this.calculateLabelPositionFor("y", yComponentPoints);
+            this.calculateLabelPositionFor("y-origin", yComponentOriginPoints);
         }
 
         if (prevState.degree !== this.state.degree) {
@@ -271,16 +277,16 @@ class SFVectorClass extends Component {
         } else if (type === 'x') {
             let updatedPos = {...pos};
             if (this.xLengthTextRef.current) {
-                updatedPos.x -= this.yLengthTextRef.current.textWidth / 2
+                updatedPos.x -= this.xLengthTextRef.current.textWidth / 2
             }
             if (this.state.degree < 0) {
-                updatedPos.y -= this.yLengthTextRef.current.textHeight
+                updatedPos.y -= this.xLengthTextRef.current.textHeight
             }
             
             this.setState({
                 xComponentLablePos: updatedPos,
             })
-        } else {
+        } else if (type === 'y') {
 
             let absDegree = Math.abs(this.state.degree);
             let updatedPos = {...pos};
@@ -299,6 +305,19 @@ class SFVectorClass extends Component {
 
             this.setState({
                 yComponentLablePos: updatedPos
+            })
+        } else if (type === 'y-origin') {
+
+            let updatedPos = {...pos};
+            if (this.yLengthTextRef.current) {
+                updatedPos.x -= this.yLengthTextRef.current.textWidth / 2
+            }
+            if (this.state.degree < 0) {
+                updatedPos.y -= this.yLengthTextRef.current.textHeight
+            }
+
+            this.setState({
+                yComponentOriginLablePos: updatedPos
             })
         }
 
@@ -461,7 +480,7 @@ class SFVectorClass extends Component {
 
     render() {
 
-        let { points, length, xComponentLength, xComponentLablePos, yComponentLablePos, yComponentLength, degree, angleTrianglePos } = this.state;
+        let { points, length, xComponentLength, xComponentLablePos, yComponentLablePos, yComponentLength, yComponentOriginLablePos, degree, angleTrianglePos } = this.state;
 
         return (
             <Layer key={this.props.text}>
@@ -534,7 +553,7 @@ class SFVectorClass extends Component {
                     />
 
                     {/* Show X-Axis Components Group */}
-                    <Group visible={this.props.showComponents && Math.abs(parseInt(degree, 10)) !== 90 &&  Math.abs(parseInt(degree, 10)) !== 180}>
+                    <Group visible={(this.props.showComponents || this.props.showComponents2) && Math.abs(parseInt(degree, 10)) !== 90 &&  Math.abs(parseInt(degree, 10)) !== 180}>
                         <Arrow
                             points={this.modifiedPoints([points[0], points[1], points[2], points[1]])}
                             stroke={this.props.strokeColor}
@@ -607,6 +626,53 @@ class SFVectorClass extends Component {
                             visible={this.props.showValues}
                             x={yComponentLablePos.x}
                             y={yComponentLablePos.y}
+                            onClick={() => this.props.updateActive(true)}
+                        >
+                            <Tag
+                                fill={this.props.active ? "#f3f383" : "#f0f0f0"}
+                                cornerRadius={4}
+                                stroke={this.props.active ? "#e4e4e4" : "#ddd"}
+                                strokeWidth={1}
+                            />
+                            <Text
+                                ref={this.yLengthTextRef}
+                                text={(yComponentLength / 20).toFixed(1)}
+                                fill="black"
+                                fontSize={21}
+                                height={this.labelSize}
+                                align="center"
+                                fontFamily='sans'
+                            />
+                        </Label>
+                    </Group>
+
+                     {/* Show Y-Axis Components From Origin Point Group */}
+                     <Group visible={this.props.showComponents2 && (Math.abs(degree) !== 0 && Math.abs(degree) !== 90 && Math.abs(degree) !== 180)}>
+                        <Arrow
+                            points={this.modifiedPoints([points[0], points[1], points[0], points[3]])}
+                            stroke={this.props.strokeColor}
+                            fill={this.props.strokeColor}
+                            dashEnabled
+                            dash={[7, 4]}
+                            strokeWidth={length < 40 ? 3 : 4}
+                            pointerAtBeginning={false}
+                            pointerAtEnding={false}
+                        />
+                        <RegularPolygon
+                            x={points[0]}
+                            y={points[3]}
+                            offsetY={Math.sin(degreeToRadian(degree)) - 8}
+                            sides={3}
+                            radius={yComponentLength < 40 ? 7 : 8}
+                            scaleX={yComponentLength < 40 ? 1 : 1.1}
+                            scaleY={yComponentLength < 40 ? 1 : 1.6}
+                            rotation={degree < 0 ? 180 : 0}
+                            fill={this.props.strokeColor}
+                        />
+                        <Label
+                            visible={this.props.showValues}
+                            x={yComponentOriginLablePos.x}
+                            y={yComponentOriginLablePos.y}
                             onClick={() => this.props.updateActive(true)}
                         >
                             <Tag

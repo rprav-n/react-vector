@@ -22,6 +22,7 @@ function App() {
   const [showAngle, setShowAngle] = useState(true);
   const [showGrid, setShowGrid] = useState(true);
   const [showComponents, setShowComponents] = useState(false);
+  const [showComponents2, setShowComponents2] = useState(false);
   const [snap, setSnap] = useState(true);
   const [showValues, setShowValues] = useState(false);
   const [debug, setDebug] = useState(false);
@@ -131,10 +132,10 @@ function App() {
 
   return (
     <div
-      style={{ width: '100%', display: "flex", flexWrap: 'wrap', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', }}
+      className='main-container'
     >
       {/* Settings to control */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: '1rem', paddingBottom: '1rem' }}>
+      <div className='settings-container'>
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: '1rem' }}>
           <div>
             <label htmlFor='width'>Grid Width: {gridSize.width}</label>
@@ -192,7 +193,19 @@ function App() {
           <div>
             <label htmlFor='components'>Show Components</label>
             <input type="checkbox" name='components' id="components" checked={showComponents}
-              onChange={() => setShowComponents(!showComponents)}
+              onChange={() => {
+                setShowComponents(!showComponents);
+                setShowComponents2(false);
+              }}
+            />
+          </div>
+          <div>
+            <label htmlFor='components'>Show Components (From Origin)</label>
+            <input type="checkbox" name='components2' id="components2" checked={showComponents2}
+              onChange={() => {
+                setShowComponents2(!showComponents2);
+                setShowComponents(false);
+              }}
             />
           </div>
           <div>
@@ -251,7 +264,7 @@ function App() {
 
       {/* Selected Vector values */}
       <div className='card-container' style={{
-        display: selectedVec ? 'flex' : 'none'
+        visibility: selectedVec ? 'visible' : 'hidden',
       }}>
         <div className='card' >
           <span className='card-title'>|{selectedVec?.text}|:</span>
@@ -279,8 +292,8 @@ function App() {
         </div>
       </div>
 
-      <Stage width={gridSize.width} height={gridSize.height}
-        style={{ border: '2px solid #d7d9d9', borderRadius: '4px',  }}
+      <Stage width={gridSize.width+100} height={gridSize.height+100}
+        // style={{ border: '2px solid #d7d9d9', borderRadius: '4px',  }}
         scaleX={1}
         scaleY={1}
       >
@@ -342,6 +355,7 @@ function App() {
             active={vec.active}
             showAngle={showAngle}
             showComponents={showComponents}
+            showComponents2={showComponents2}
             showValues={showValues}
             strokeColor={vec.color}
             strokeWidth={5}
