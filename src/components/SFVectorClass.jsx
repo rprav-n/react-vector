@@ -54,19 +54,18 @@ class SFVectorClass extends Component {
         this.calculateLabelPositionFor("x", xComponentPoints);
         this.calculateLabelPositionFor("y", yComponentPoints);
         this.calculateLabelPositionFor("y-origin", yComponentOriginPoints);
+
     }
+
 
     componentDidUpdate(prevProps, prevState) {
 
 
-        /* if (prevProps.points !== this.props.points) {
-            let basePoints = this.calculateAndReturnBasePoints();
-            this.calculateDegree(...this.props.points, ...basePoints);
-
-            this.calculateLength(this.props.points);
-            this.calculateAngleTrianglePosition(this.props.points);
-            this.calculateDegreeTextPosition(this.props.points);
-        } */
+        if (prevProps.points !== this.props.points) {
+            this.setState({
+                points: this.props.points
+            })
+        } 
 
         if (prevState.points !== this.state.points) {
 

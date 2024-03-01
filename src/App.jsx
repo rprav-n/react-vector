@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Stage } from "react-konva";
-// import SFVector from './components/SFVector';
 import SFGrid from './components/SFGrid';
 import SFOrigin from './components/SFOrigin';
 import SFVectorClass from './components/SFVectorClass';
 import "./index.css";
+import { degreeToRadian } from './util/utils';
 
 const alphabets = "abcdefghijklmnopqrstuvwxyz";
 
@@ -32,15 +32,12 @@ function App() {
   const [vectors, setVectors] = useState([]);
 
 
-  const [angleVal, setAngleVal] = useState('');
-  const [lengthVal, setLengthVal] = useState('');
-  const [xlengthVal, setXLengthVal] = useState('');
-  const [ylengthVal, setYLengthVal] = useState('');
+  const [angleVal, setAngleVal] = useState(90);
+  const [lengthVal, setLengthVal] = useState(5.0);
 
   const handleAddNewVector = () => {
     let newVector = {
       points: [300, 300, 300, 200],
-      // points: [300, 300, 264.1541107096664, 371.51973308804463],
       active: true,
       length: 5.0,
       degree: 90,
@@ -65,14 +62,14 @@ function App() {
   }
 
   const updateVectorLength = (index, distance) => {
-    // setLengthVal(distance);
+    setLengthVal(distance);
     let sv = selectedVec;
     sv.length = distance;
     setSelectedVec(sv);
   }
 
   const updateVectornAngle = (angleDegrees) => {
-    // setAngleVal(angleDegrees);
+    setAngleVal(angleDegrees);
     let sv = selectedVec;
     sv.degree = angleDegrees;
     setSelectedVec(sv)
@@ -90,44 +87,52 @@ function App() {
     setSelectedVec(sv);
   }
 
-  const handleLengthChange = (event) => {
+
+  // Input changes
+  const handleLengthInputChange = (event) => {
     let val = parseFloat(event.target.value);
+    setLengthVal(val);
 
-    let index = vectors.findIndex(vec => vec.text === selectedVec.text);
-    if (index < 0) return;
+    let index = vectors.findIndex(v => v.text === selectedVec.text);
+    let newVectorArr = [...vectors];
+    let points = newVectorArr[index].points;
 
-    let newVectors = [...vectors];
+    let newArrowPoints = calculateEndpoint(points[0], points[1], val*gridCount, selectedVec.degree)
+    
+    newVectorArr[index] = {
+      ...newVectorArr[index],
+      points: [points[0], points[1], ...newArrowPoints]
+    };
 
-    newVectors[index].length = val;
+    setVectors(newVectorArr);
+  }
+  
+  const calculateEndpoint = (x1, y1, length, angle) => {
+    let radians = degreeToRadian(angle);
 
-    setVectors([...newVectors])
+    let newX = x1 + (length * Math.cos(radians));
+    let newY = y1 - (length * Math.sin(radians));
+
+    return [newX, newY];
   }
 
-  const updateSelectedArrowPoints = (lengthVal) => {
-    let index = vectors.findIndex(vec => vec.text === selectedVec.text);
-    if (index < 0) return;
+  const handleDegreeInputChange = (event) => {
+    let val = parseFloat(event.target.value);
+    setAngleVal(val); // in degree
 
+    let index = vectors.findIndex(v => v.text === selectedVec.text);
+    let newVectorArr = [...vectors];
+    let points = newVectorArr[index].points;
 
-    let [x1, y1, x2, y2] = vectors[index].points;
-
-    let angle = parseFloat(angleVal);
-
-    let newX2 = x1 + lengthVal * gridCount * Math.cos(angle);
-    let newY2 = y1 + lengthVal * gridCount * Math.sin(angle);
-
-    let newPoints = [x1, y1, newX2, newY2];
-
-    let newVectors = [...vectors];
-
-    newVectors[index] = {
-      ...newVectors[index],
-      points: newPoints
-    }
-
-    console.debug("newVectors", newVectors, x1, y1, x2, y2)
-
-    setVectors([...newVectors])
+    let newArrowPoints = calculateEndpoint(points[0], points[1], lengthVal*gridCount, val)
+    
+    newVectorArr[index] = {
+      ...newVectorArr[index],
+      points: [points[0], points[1], ...newArrowPoints]
+    };
+    setVectors(newVectorArr);
   }
+
 
 
   return (
@@ -269,31 +274,35 @@ function App() {
         <div className='card' >
           <span className='card-title'>|{selectedVec?.text}|:</span>
           <span className='card-input'>
-            <input type="number" name='length' id='length' onChange={() => { }} value={selectedVec?.length} />
+            <input type="number" name='length' step={0.1} id='length' onChange={handleLengthInputChange} value={lengthVal} />
           </span>
         </div>
         <div className='card'>
           <span className='card-title'>θ:</span>
           <span className='card-input'>
-            <input type="number" name='degree' id='degree' onChange={() => { }} value={selectedVec?.degree} />
+            <input type="number" name='degree' step={10} id='degree' onChange={handleDegreeInputChange} value={angleVal} />
           </span>
         </div>
-        <div className='card'>
+        <div className='card' style={{
+          display: showComponents && showValues ? 'block' : 'none'
+        }}>
           <span className='card-title'>{selectedVec?.text}(x):</span>
           <span className='card-input'>
-            <input type="number" name='x' id='x' onChange={() => { }} value={selectedVec?.xLength} />
+            <input type="number" disabled name='x' id='x' onChange={() => { }} value={selectedVec?.xLength} />
           </span>
         </div>
-        <div className='card'>
+        <div className='card' style={{
+          display: showComponents && showValues ? 'block' : 'none'
+        }}>
           <span className='card-title'>{selectedVec?.text}(y):</span>
           <span className='card-input'>
-            <input type="number" name='y' id='y' onChange={() => { }} value={selectedVec?.yLength} />
+            <input type="number" disabled name='y' id='y' onChange={() => { }} value={selectedVec?.yLength} />
           </span>
         </div>
       </div>
 
-      <Stage width={gridSize.width+100} height={gridSize.height+100}
-        // style={{ border: '2px solid #d7d9d9', borderRadius: '4px',  }}
+      <Stage width={gridSize.width} height={gridSize.height}
+        style={{ border: '2px solid #d7d9d9', borderRadius: '4px', }}
         scaleX={1}
         scaleY={1}
       >
@@ -316,36 +325,6 @@ function App() {
           cellSize={cellSize}
         />
 
-        {/* {vectors.map((vec, index) => {
-          return <SFVector
-            key={index}
-            cellSize={cellSize}
-            debug={debug}
-            active={vec.active}
-            showAngle={showAngle}
-            showComponents={showComponents}
-            arrowStorke={vec.color}
-            gridSize={gridSize}
-            gridCount={gridCount}
-            points={vec.points}
-            snap={true}
-            clamp={true}
-            updatePoints={(newPoints) => {
-              let newVecArr = [...vectors];
-              newVecArr[index].points = newPoints;
-              setVectors(newVecArr);
-            }}
-            updateActive={(val) => {
-              let newVecArr = vectors.map(v => ({ ...v, active: false }));
-              newVecArr[index].active = val;
-
-              setSelectedVec(newVecArr[index]);
-
-              setVectors(newVecArr);
-            }}
-            text={vec.text}
-          />
-        })} */}
         {vectors.map((vec, index) => {
           return <SFVectorClass
             key={index}
@@ -389,21 +368,6 @@ function App() {
             text={vec.text}
           />
         })}
-
-        {/* <SFVector
-          active={pointActive}
-          showAngle={showAngle}
-          arrowStorke={color}
-          gridSize={gridSize}
-          gridCount={gridCount}
-          points={points}
-          snap={true}
-          clamp={true}
-          updatePoints={updatePoints}
-          updateActive={updateActive}
-          text={"a"}
-        /> */}
-
       </Stage>
     </div>
   )
