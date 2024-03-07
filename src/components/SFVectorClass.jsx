@@ -10,17 +10,13 @@ class SFVectorClass extends Component {
     constructor(props) {
         super(props)
 
-        this.width = props.gridSize.width;
-        this.height = props.gridSize.height;
-        this.count = props.gridCount;
-
         this.degreeTextRef = React.createRef();
         this.xLengthTextRef = React.createRef();
         this.yLengthTextRef = React.createRef();
 
         this.state = {
             points: this.props.points,
-            length: this.props.length * this.count,
+            length: this.props.length * this.props.gridValue,
             labelPosition: { x: 0, y: 0 },
             degree: 90,
             degreeTextPosition: { x: 325, y: 261 },
@@ -59,8 +55,7 @@ class SFVectorClass extends Component {
 
 
     componentDidUpdate(prevProps, prevState) {
-
-
+        
         if (prevProps.points !== this.props.points) {
             this.setState({
                 points: this.props.points
@@ -96,11 +91,11 @@ class SFVectorClass extends Component {
 
 
         /* if (prevProps.length !== this.props.length) {
-            this.props.updateVectorLength(this.props.index, (this.props.length / this.count));
+            this.props.updateVectorLength(this.props.index, (this.props.length / this.props.gridValue));
         }  */
 
         if (prevState.length !== this.state.length) {
-            this.props.updateVectorLength(this.props.index, (this.state.length / this.count).toFixed(1));
+            this.props.updateVectorLength(this.props.index, (this.state.length / this.props.gridValue).toFixed(1));
         }
     }
 
@@ -109,8 +104,8 @@ class SFVectorClass extends Component {
 
         let angleInRad = degreeToRadian(this.state.degree);
 
-        let newX2 = x1 + newLength * this.count * Math.cos(angleInRad);
-        let newY2 = y1 + newLength * this.count * Math.sin(angleInRad);
+        let newX2 = x1 + newLength * this.props.gridValue * Math.cos(angleInRad);
+        let newY2 = y1 + newLength * this.props.gridValue * Math.sin(angleInRad);
 
         let newPoints = [x1, y1, newX2, newY2];
 
@@ -332,12 +327,12 @@ class SFVectorClass extends Component {
         let componentLength = vecA.distance(vecB);
 
         if (axis === "x") {
-            this.props.updateVectorXComponentLength((componentLength / this.count).toFixed(2))
+            this.props.updateVectorXComponentLength((componentLength / this.props.gridValue).toFixed(2))
             this.setState({
                 xComponentLength: componentLength
             })
         } else {
-            this.props.updateVectorYComponentLength((componentLength / this.count).toFixed(2))
+            this.props.updateVectorYComponentLength((componentLength / this.props.gridValue).toFixed(2))
             this.setState({
                 yComponentLength: componentLength
             })
@@ -397,8 +392,8 @@ class SFVectorClass extends Component {
         let y = target.y();
 
         if (this.props.snap) {
-            x = Math.round(x / this.count) * this.count;
-            y = Math.round(y / this.count) * this.count;
+            x = Math.round(x / this.props.gridValue) * this.props.gridValue;
+            y = Math.round(y / this.props.gridValue) * this.props.gridValue;
         }
 
 
@@ -408,19 +403,19 @@ class SFVectorClass extends Component {
         }
 
         let newPoints = [
-            Math.round((previousPoint[0] + x) / this.count) * this.count,
-            Math.round((previousPoint[1] + y) / this.count) * this.count,
-            Math.round((previousPoint[2] + x) / this.count) * this.count,
-            Math.round((previousPoint[3] + y) / this.count) * this.count,
+            Math.round((previousPoint[0] + x) / this.props.gridValue) * this.props.gridValue,
+            Math.round((previousPoint[1] + y) / this.props.gridValue) * this.props.gridValue,
+            Math.round((previousPoint[2] + x) / this.props.gridValue) * this.props.gridValue,
+            Math.round((previousPoint[3] + y) / this.props.gridValue) * this.props.gridValue,
         ];
 
 
         if (this.props.clamp) {
             newPoints = [
-                clamp(newPoints[0], 0, this.width),
-                clamp(newPoints[1], 0, this.height),
-                clamp(newPoints[2], 0, this.width),
-                clamp(newPoints[3], 0, this.height),
+                clamp(newPoints[0], 0, this.props.gridWidth),
+                clamp(newPoints[1], 0, this.props.gridHeight),
+                clamp(newPoints[2], 0, this.props.gridWidth),
+                clamp(newPoints[3], 0, this.props.gridHeight),
             ]
         }
 
@@ -446,13 +441,13 @@ class SFVectorClass extends Component {
         let y = target.y();
 
         if (this.props.snap) {
-            x = Math.round(x / this.count) * this.count;
-            y = Math.round(y / this.count) * this.count;
+            x = Math.round(x / this.props.gridValue) * this.props.gridValue;
+            y = Math.round(y / this.props.gridValue) * this.props.gridValue;
         }
 
         if (this.props.clamp) {
-            x = clamp(x, 0, this.width)
-            y = clamp(y, 0, this.height)
+            x = clamp(x, 0, this.props.gridWidth)
+            y = clamp(y, 0, this.props.gridHeight)
         }
 
         if (x === this.state.points[0] && y === this.state.points[1]) return;

@@ -1,5 +1,34 @@
 import Victor from "victor";
 
+const _gridUnitSizes = [
+    {
+      label: "Very small",
+      gridValues: "20x20",
+      value: 15
+    },
+    {
+      label: "Small",
+      gridValues: "10x10",
+      value: 24
+    },
+    {
+      label: "Medium",
+      gridValues: "10x10",
+      value: 38
+    },
+    {
+      label: "Large",
+      gridValues: "6x6",
+      value: 72
+    },
+    {
+      label: "Very large",
+      gridValues: "2x2",
+      value: 100
+    },
+  ];
+  
+
 const clamp = (value, min, max) => {
     return Math.min(Math.max(value, min), max);
 }
